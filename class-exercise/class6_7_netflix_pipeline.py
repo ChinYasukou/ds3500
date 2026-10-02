@@ -6,8 +6,10 @@ from pathlib import Path
 import pandas as pd
 
 from class6_7_netflix_utils import (
+    clean_text,
     drop_missing_rows,
     remove_duplicates,
+    remove_iqr_outliers,
     show_overview,
 )
 
@@ -48,6 +50,7 @@ def main():
         netflix_df.shape[0],
         netflix_df.shape[1],
     )
+    df_original = netflix_df.copy()
 
     show_overview(netflix_df)
     logger.info("Displayed DataFrame overview")
@@ -65,6 +68,33 @@ def main():
         "Dropped %d rows with missing values",
         before_count - len(netflix_df),
     )
+
+    before_count = len(netflix_df)
+    try:
+        netflix_df = remove_iqr_outliers(
+            netflix_df,
+            "runtime_minutes",
+            1.5,
+        )
+    except ValueError as error:
+        logger.error("Unable to remove outliers: %s", error)
+        sys.exit(1)
+    logger.info(
+        "Removed %d runtime_minutes outlier(s)",
+        before_count - len(netflix_df),
+    )
+
+    for column in ("title", "type", "country"):
+        netflix_df[column] = netflix_df[column].apply(clean_text)
+        logger.info("Cleaned text column: %s", column)
+
+    report = {
+        "rows_before": len(df_original),
+        "rows_after": len(netflix_df),
+        "rows_removed": len(df_original) - len(netflix_df),
+        "columns": len(netflix_df.columns),
+    }
+    logger.info("Cleaning complete: %s", report)
 
 
 if __name__ == "__main__":
