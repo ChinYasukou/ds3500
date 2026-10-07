@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 
-class Class8StarterTests(unittest.TestCase):
+class Class8PackageTests(unittest.TestCase):
     def load_module(self, name):
         try:
             return import_module(name)
@@ -16,7 +16,7 @@ class Class8StarterTests(unittest.TestCase):
             self.fail(f"{name} has not been implemented")
 
     def test_load_netflix_reads_csv(self):
-        loader = self.load_module("class8_data_loader")
+        loader = self.load_module("class8_src.class8_data_loader")
         with tempfile.TemporaryDirectory() as directory:
             csv_path = Path(directory) / "netflix.csv"
             csv_path.write_text("title,type\nA,Movie\n", encoding="utf-8")
@@ -26,7 +26,7 @@ class Class8StarterTests(unittest.TestCase):
         self.assertEqual(result.to_dict("records"), [{"title": "A", "type": "Movie"}])
 
     def test_require_columns_returns_valid_dataframe(self):
-        validator = self.load_module("class8_data_validator")
+        validator = self.load_module("class8_src.class8_data_validator")
         df = pd.DataFrame({"title": ["A"], "type": ["Movie"]})
 
         result = validator.require_columns(df, ["title", "type"])
@@ -34,10 +34,13 @@ class Class8StarterTests(unittest.TestCase):
         self.assertIs(result, df)
 
     def test_require_columns_rejects_missing_columns(self):
-        validator = self.load_module("class8_data_validator")
+        validator = self.load_module("class8_src.class8_data_validator")
         df = pd.DataFrame({"title": ["A"]})
 
-        with self.assertLogs("class8_data_validator", level="ERROR"):
+        with self.assertLogs(
+            "class8_src.class8_data_validator",
+            level="ERROR",
+        ):
             with self.assertRaisesRegex(ValueError, "type"):
                 validator.require_columns(df, ["title", "type"])
 
@@ -53,12 +56,25 @@ class Class8StarterTests(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("class8_data_loader", result.stderr)
+        self.assertIn("class8_src.class8_data_loader", result.stderr)
         self.assertIn("Data loaded", result.stderr)
-        self.assertIn("class8_data_validator", result.stderr)
+        self.assertIn("class8_src.class8_data_validator", result.stderr)
         self.assertIn("Validation completed", result.stderr)
         self.assertIn("__main__", result.stderr)
         self.assertIn("Pipeline completed", result.stderr)
+
+    def test_package_exposes_loader_and_validator(self):
+        package = self.load_module("class8_src")
+
+        self.assertTrue(callable(package.load_netflix))
+        self.assertTrue(callable(package.require_columns))
+
+    def test_helper_modules_are_organized_inside_package(self):
+        root = Path(__file__).parent
+
+        self.assertFalse((root / "class8_data_loader.py").exists())
+        self.assertFalse((root / "class8_data_validator.py").exists())
+        self.assertTrue((root / "class8_src" / "__init__.py").is_file())
 
 
 if __name__ == "__main__":
