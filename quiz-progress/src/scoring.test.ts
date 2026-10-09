@@ -38,26 +38,26 @@ describe('DS3500 scoring rules', () => {
   it('uses actual math for quizzes needed by scenario', () => {
     const regularQuizzesRemaining = initialFutureQuizzes.filter((quiz) => !quiz.optional).length
     const scenarios = calculateScenarioNeeds(INITIAL_TOTAL, regularQuizzesRemaining)
-    expect(regularQuizzesRemaining).toBe(7)
-    expect(scenarios.find((scenario) => scenario.pointsPerQuiz === 1450)?.quizzesNeeded).toBe(3)
-    expect(scenarios.find((scenario) => scenario.pointsPerQuiz === 1100)?.quizzesNeeded).toBe(3)
-    expect(scenarios.find((scenario) => scenario.pointsPerQuiz === 800)?.quizzesNeeded).toBe(5)
-    expect(scenarios.find((scenario) => scenario.pointsPerQuiz === 540)?.quizzesNeeded).toBe(6)
+    expect(regularQuizzesRemaining).toBe(6)
+    expect(scenarios.find((scenario) => scenario.pointsPerQuiz === 1450)?.quizzesNeeded).toBe(2)
+    expect(scenarios.find((scenario) => scenario.pointsPerQuiz === 1100)?.quizzesNeeded).toBe(2)
+    expect(scenarios.find((scenario) => scenario.pointsPerQuiz === 800)?.quizzesNeeded).toBe(3)
+    expect(scenarios.find((scenario) => scenario.pointsPerQuiz === 540)?.quizzesNeeded).toBe(4)
     expect(scenarios.find((scenario) => scenario.pointsPerQuiz === 200)?.achievable).toBe(false)
   })
 
-  it('records Quiz 3 as a completed 60% result and updates the baseline', () => {
-    expect(completedQuizzes).toHaveLength(3)
-    expect(completedQuizzes[2]).toMatchObject({
-      id: 3,
-      name: 'Quiz 3',
-      percentage: 60,
-      points: 540,
+  it('records Quiz 4 as a completed 85% result and updates the baseline', () => {
+    expect(completedQuizzes).toHaveLength(4)
+    expect(completedQuizzes[3]).toMatchObject({
+      id: 4,
+      name: 'Quiz 4',
+      percentage: 85,
+      points: 1100,
       completed: true,
     })
-    expect(INITIAL_TOTAL).toBe(2180)
-    expect(initialFutureQuizzes).toHaveLength(8)
-    expect(initialFutureQuizzes[0].name).toBe('Quiz 4')
+    expect(INITIAL_TOTAL).toBe(3280)
+    expect(initialFutureQuizzes).toHaveLength(7)
+    expect(initialFutureQuizzes[0].name).toBe('Quiz 5')
     expect(initialFutureQuizzes.at(-2)?.name).toBe('Quiz 10')
     expect(initialFutureQuizzes.at(-1)).toMatchObject({ name: 'Optional Quiz', optional: true })
   })
@@ -74,7 +74,7 @@ describe('DS3500 scoring rules', () => {
 
     const summary = calculatePlanSummary([...completedQuizzes, optionalQuiz])
 
-    expect(summary.total).toBe(2740)
+    expect(summary.total).toBe(3840)
     expect(summary.optionalReplacementGain).toBe(560)
     expect(summary.replacedQuiz?.name).toBe('Quiz 1')
   })
@@ -91,7 +91,7 @@ describe('DS3500 scoring rules', () => {
 
     const summary = calculatePlanSummary([...completedQuizzes, optionalQuiz])
 
-    expect(summary.total).toBe(2180)
+    expect(summary.total).toBe(3280)
     expect(summary.optionalReplacementGain).toBe(0)
     expect(summary.replacedQuiz).toBeNull()
   })
@@ -99,29 +99,29 @@ describe('DS3500 scoring rules', () => {
   it('summarizes mixed future plans without capping totals at the target', () => {
     const summary = calculatePlanSummary([
       ...completedQuizzes,
-      { id: 4, name: 'Quiz 4', percentage: 100, points: 1450, completed: false },
       { id: 5, name: 'Quiz 5', percentage: 100, points: 1450, completed: false },
       { id: 6, name: 'Quiz 6', percentage: 100, points: 1450, completed: false },
+      { id: 7, name: 'Quiz 7', percentage: 100, points: 1450, completed: false },
     ])
 
-    expect(summary.total).toBe(6530)
+    expect(summary.total).toBe(7630)
     expect(summary.reached).toBe(true)
     expect(summary.remaining).toBe(0)
-    expect(summary.spare).toBe(1130)
+    expect(summary.spare).toBe(2230)
     expect(TARGET_POINTS).toBe(5400)
   })
 
   it('builds exact bracket-based path options for remaining opportunities', () => {
-    const paths = buildPathOptions(3220, 6)
+    const paths = buildPathOptions(2120, 6)
     const mostly80 = paths.find((path) => path.id === 'mostly-80')
     const mixed = paths.find((path) => path.id === 'mixed-80-61')
     const recovery = paths.find((path) => path.id === 'recovery')
 
-    expect(mostly80?.points).toBe(3300)
+    expect(mostly80?.points).toBe(2200)
     expect(mostly80?.achievable).toBe(true)
-    expect(mixed?.points).toBe(4100)
+    expect(mixed?.points).toBe(2440)
     expect(mixed?.achievable).toBe(true)
-    expect(recovery?.scores.map((score) => score.points)).toEqual([540, 1100, 1100, 1100])
+    expect(recovery?.scores.map((score) => score.points)).toEqual([540, 1100, 1100])
   })
 
   it('keeps scoring brackets as a simple editable data structure', () => {

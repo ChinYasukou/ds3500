@@ -1,5 +1,5 @@
 export const TARGET_POINTS = 5400
-export const INITIAL_TOTAL = 2180
+export const INITIAL_TOTAL = 3280
 
 export const BRACKETS = [
   { label: '91-100%', min: 91, max: 100, points: 1450 },
@@ -26,10 +26,10 @@ export const completedQuizzes: QuizResult[] = [
   { id: 1, name: 'Quiz 1', percentage: 55, points: 540, completed: true },
   { id: 2, name: 'Quiz 2', percentage: 85, points: 1100, completed: true },
   { id: 3, name: 'Quiz 3', percentage: 60, points: 540, completed: true },
+  { id: 4, name: 'Quiz 4', percentage: 85, points: 1100, completed: true },
 ]
 
 const futureQuizDefinitions = [
-  { id: 4, name: 'Quiz 4' },
   { id: 5, name: 'Quiz 5' },
   { id: 6, name: 'Quiz 6' },
   { id: 7, name: 'Quiz 7' },
@@ -128,26 +128,26 @@ export function buildPathOptions(pointsRemaining: number, opportunitiesRemaining
     {
       id: 'mostly-80',
       title: 'Mostly 80-90%',
-      description: 'Three solid 1100-point quizzes reach the requirement.',
-      scores: [score('80-90%', 1100), score('80-90%', 1100), score('80-90%', 1100)],
+      description: 'Two solid 1100-point quizzes reach the requirement.',
+      scores: [score('80-90%', 1100), score('80-90%', 1100)],
     },
     {
       id: 'mostly-61',
       title: 'Mostly 61-79%',
-      description: 'Five 800-point quizzes clears the remaining gap.',
-      scores: [score('61-79%', 800), score('61-79%', 800), score('61-79%', 800), score('61-79%', 800), score('61-79%', 800)],
+      description: 'Three 800-point quizzes clear the remaining gap.',
+      scores: [score('61-79%', 800), score('61-79%', 800), score('61-79%', 800)],
     },
     {
       id: 'mixed-80-61',
       title: 'Blend 80-90% and 61-79%',
-      description: 'Three 1100-point quizzes plus one 800-point quiz gives breathing room.',
-      scores: [score('80-90%', 1100), score('80-90%', 1100), score('80-90%', 1100), score('61-79%', 800)],
+      description: 'One 1100-point, one 800-point, and one 540-point quiz clear the gap.',
+      scores: [score('80-90%', 1100), score('61-79%', 800), score('45-60%', 540)],
     },
     {
       id: 'recovery',
       title: 'One weaker quiz, then stronger',
-      description: 'A 540-point quiz can still fit if the next three land in the 80-90% bracket.',
-      scores: [score('45-60%', 540), score('80-90%', 1100), score('80-90%', 1100), score('80-90%', 1100)],
+      description: 'A 540-point quiz can still fit if the next two land in the 80-90% bracket.',
+      scores: [score('45-60%', 540), score('80-90%', 1100), score('80-90%', 1100)],
     },
   ]
 

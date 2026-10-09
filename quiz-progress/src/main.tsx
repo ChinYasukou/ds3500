@@ -16,7 +16,7 @@ import {
   type QuizResult,
 } from './scoring'
 
-const STORAGE_KEY = 'ds3500-quiz-progress:v3'
+const STORAGE_KEY = 'ds3500-quiz-progress:v4'
 const THEME_KEY = 'ds3500-quiz-progress:theme'
 
 function formatPoints(points: number) {
