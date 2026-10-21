@@ -1,5 +1,5 @@
 export const TARGET_POINTS = 5400
-export const INITIAL_TOTAL = 4380
+export const INITIAL_TOTAL = 4920
 
 export const BRACKETS = [
   { label: '91-100%', min: 91, max: 100, points: 1450 },
@@ -28,10 +28,10 @@ export const completedQuizzes: QuizResult[] = [
   { id: 3, name: 'Quiz 3', percentage: 60, points: 540, completed: true },
   { id: 4, name: 'Quiz 4', percentage: 85, points: 1100, completed: true },
   { id: 5, name: 'Quiz 5', percentage: 85, points: 1100, completed: true },
+  { id: 6, name: 'Quiz 6', percentage: 60, points: 540, completed: true },
 ]
 
 const futureQuizDefinitions = [
-  { id: 6, name: 'Quiz 6' },
   { id: 7, name: 'Quiz 7' },
   { id: 8, name: 'Quiz 8' },
   { id: 9, name: 'Quiz 9' },
@@ -134,20 +134,20 @@ export function buildPathOptions(pointsRemaining: number, opportunitiesRemaining
     {
       id: 'mostly-61',
       title: 'Mostly 61-79%',
-      description: 'Two 800-point quizzes clear the remaining gap.',
-      scores: [score('61-79%', 800), score('61-79%', 800)],
+      description: 'One 800-point quiz clears the remaining gap.',
+      scores: [score('61-79%', 800)],
     },
     {
       id: 'mixed-80-61',
-      title: 'Blend 61-79% and 45-60%',
-      description: 'One 800-point quiz plus one 540-point quiz clears the gap.',
-      scores: [score('61-79%', 800), score('45-60%', 540)],
+      title: 'One steady 45-60%',
+      description: 'One more 540-point quiz is enough to reach the requirement.',
+      scores: [score('45-60%', 540)],
     },
     {
       id: 'recovery',
-      title: 'One weaker quiz, then stronger',
-      description: 'A 540-point quiz can still fit if the next one lands in the 80-90% bracket.',
-      scores: [score('45-60%', 540), score('80-90%', 1100)],
+      title: 'One lower score, then steady',
+      description: 'A 200-point quiz followed by a 540-point quiz still clears the gap.',
+      scores: [score('25-44%', 200), score('45-60%', 540)],
     },
   ]
 
