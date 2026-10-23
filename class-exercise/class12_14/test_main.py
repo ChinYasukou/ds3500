@@ -60,3 +60,64 @@ def test_demo_endpoints(client):
     assert client.post("/demo/movie-examples", json=movie).json() == {**movie, "id": 1}
     assert client.post("/demo/movie-examples", json=movie).json()["id"] == 2
     assert len(main.movies) == 2
+
+
+def test_upload_and_retrieve_netflix(client):
+    from pathlib import Path
+    import pandas as pd
+
+    path = Path(__file__).resolve().parents[1] / "data" / "messy_netflix_titles.csv"
+    expected = pd.read_csv(path)
+    response = client.post("/inspect-csv", files={"file": (path.name, path.read_bytes(), "text/csv")})
+    assert response.status_code == 200
+    info = response.json()
+    assert info["filename"] == path.name
+    assert (info["rows"], info["columns"]) == expected.shape
+    assert info["column_names"] == expected.columns.tolist()
+    response = client.get(f"/datasets/{info['dataset_id']}/shape")
+    assert response.status_code == 200
+    assert response.json() == {"dataset_id": info["dataset_id"], "rows": 25, "columns": 7}
+
+
+@pytest.mark.parametrize("filename,content", [
+    ("requirements.txt", b"fastapi"),
+    ("empty.csv", b""),
+    ("broken.csv", b'title,year\n"unclosed,2020'),
+    ("undecodable.csv", b"title\n\xff\xfe"),
+])
+def test_invalid_csv_upload(client, filename, content):
+    response = client.post("/inspect-csv", files={"file": (filename, content)})
+    assert response.status_code == 400
+    assert "detail" in response.json()
+    assert client.get("/health").json() == {"status": "ok"}
+
+
+def test_missing_dataset_and_invalid_id(client):
+    assert client.get("/datasets/999999/shape").status_code == 404
+    assert client.get("/datasets/abc/shape").status_code == 422
+    assert client.post("/inspect-csv").status_code == 422
+
+
+def test_class13_demo_endpoints(client):
+    response = client.post("/demo/inspect-csv", files={"file": ("demo.csv", b"a\n1\n")})
+    assert response.status_code == 200
+    assert response.json() == {"filename": "demo.csv", "size_bytes": 4}
+    assert client.get("/demo/movie-lookup/1").json()["title"] == "Movie A"
+    assert client.get("/demo/movie-lookup/99999").status_code == 404
+
+
+def test_storage_returns_independent_copies():
+    import pandas as pd
+    from src import DataStorage
+
+    storage = DataStorage()
+    original = pd.DataFrame({"title": ["Movie A"]})
+    first = storage.save_data(original, "first.csv")
+    second = storage.save_data(original, "second.csv")
+    assert (first, second) == (1, 2)
+    original.loc[0, "title"] = "changed"
+    retrieved = storage.get_data(first)
+    assert retrieved.loc[0, "title"] == "Movie A"
+    retrieved.loc[0, "title"] = "changed again"
+    assert storage.get_data(first).loc[0, "title"] == "Movie A"
+    assert storage.get_data(999) is None
