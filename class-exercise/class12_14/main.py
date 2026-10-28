@@ -5,7 +5,8 @@ from pathlib import Path
 import pandas as pd
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 
-from src import CSVInfo, DataStorage, MovieInput, MovieResponse
+from middleware import log_requests
+from src import CSVInfo, DataStorage, MovieInput, MovieResponse, ProcessConfig
 
 logging.basicConfig(
     level=logging.INFO,
@@ -15,6 +16,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Movie API")
+app.middleware("http")(log_requests)
 
 movies = {
     1: {"id": 1, "title": "Movie A", "release_year": 2020},
@@ -120,3 +122,14 @@ def get_dataset_shape(dataset_id: int):
         raise HTTPException(status_code=404, detail="Dataset not found")
     logger.info("Retrieved dataset shape: id=%d", dataset_id)
     return {"dataset_id": dataset_id, "rows": df.shape[0], "columns": df.shape[1]}
+
+
+@app.post("/demo/process-config")
+def demo_process_config(config: ProcessConfig):
+    df = pd.DataFrame({"title": ["Movie A", "Movie A", "Movie B", None]})
+    settings = config.model_dump()
+    if settings["processing"]["remove_duplicates"]:
+        df = df.drop_duplicates()
+    if settings["processing"]["drop_missing"]:
+        df = df.dropna()
+    return {"rows": len(df)}
