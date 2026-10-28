@@ -1,5 +1,5 @@
 export const TARGET_POINTS = 5400
-export const INITIAL_TOTAL = 4920
+export const INITIAL_TOTAL = 5120
 
 export const BRACKETS = [
   { label: '91-100%', min: 91, max: 100, points: 1450 },
@@ -28,11 +28,11 @@ export const completedQuizzes: QuizResult[] = [
   { id: 3, name: 'Quiz 3', percentage: 60, points: 540, completed: true },
   { id: 4, name: 'Quiz 4', percentage: 85, points: 1100, completed: true },
   { id: 5, name: 'Quiz 5', percentage: 85, points: 1100, completed: true },
-  { id: 6, name: 'Quiz 6', percentage: 60, points: 540, completed: true },
+  { id: 6, name: 'Quiz 6', percentage: 45, points: 540, completed: true },
+  { id: 7, name: 'Quiz 7', percentage: 40, points: 200, completed: true },
 ]
 
 const futureQuizDefinitions = [
-  { id: 7, name: 'Quiz 7' },
   { id: 8, name: 'Quiz 8' },
   { id: 9, name: 'Quiz 9' },
   { id: 10, name: 'Quiz 10' },
