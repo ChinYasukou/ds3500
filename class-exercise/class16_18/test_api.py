@@ -15,6 +15,7 @@ def storage(tmp_path):
 @pytest.fixture
 def client(storage, monkeypatch):
     monkeypatch.setattr(main, "storage", storage)
+    monkeypatch.setattr(main, "cache", main.BookCache())
     with TestClient(main.app) as test_client:
         yield test_client
 
@@ -76,3 +77,59 @@ def test_search_validates_range(client):
     assert client.get("/search/books?min_price=20&max_price=10").status_code == 400
     assert client.get("/search/books?min_price=-1&max_price=10").status_code == 422
     assert client.get("/search/books?min_price=10").status_code == 422
+
+
+def test_cache_hit_skips_database(client, monkeypatch):
+    assert client.post("/books", json={"title": "Book A", "price": 12.5}).status_code == 200
+    first = client.get("/books", params={"min_price": 0, "limit": 100})
+    assert first.status_code == 200
+
+    def fail_if_called(*args, **kwargs):
+        pytest.fail("A cache hit should not query the database")
+
+    monkeypatch.setattr(main.storage, "list_books", fail_if_called)
+    second = client.get("/books", params={"min_price": 0, "limit": 100})
+    assert second.status_code == 200
+    assert second.json() == first.json()
+
+
+def test_add_book_invalidates_cache(client):
+    assert client.post("/books", json={"title": "Book A", "price": 12.5}).status_code == 200
+    for limit in (1, 100):
+        response = client.get("/books", params={"min_price": 0, "limit": limit})
+        assert response.status_code == 200
+        assert main.cache.get(0, limit) == response.json()
+    previous = client.get("/books?min_price=0&limit=100").json()
+    assert previous == main.cache.get(0, 100)
+
+    assert client.post("/books", json={"title": "Book B", "price": 20}).status_code == 200
+    assert main.cache.get(0, 1) is None
+    assert main.cache.get(0, 100) is None
+    response = client.get("/books?min_price=0&limit=100")
+    assert response.status_code == 200
+    assert [(book["title"], book["price"]) for book in response.json()] == [
+        ("Book B", 20.0), ("Book A", 12.5),
+    ]
+    assert main.cache.get(0, 100) == response.json()
+
+
+def test_cached_empty_list_skips_database(client, monkeypatch):
+    assert client.get("/books?min_price=999").json() == []
+
+    def fail_if_called(*args, **kwargs):
+        pytest.fail("An empty cached list is still a cache hit")
+
+    monkeypatch.setattr(main.storage, "list_books", fail_if_called)
+    assert client.get("/books?min_price=999").json() == []
+
+
+def test_cache_keys_and_expiration():
+    cache = main.BookCache()
+    assert cache.make_key(0, 100) == cache.make_key(0.0, 100)
+    assert cache.make_key(1, 100) != cache.make_key(0, 100)
+    assert cache.make_key(0, 1) != cache.make_key(0, 100)
+    cache.set(0, 100, [])
+    key = cache.make_key(0, 100)
+    assert 0 < cache.client.ttl(key) <= 60
+    cache.client.expire(key, 0)
+    assert cache.get(0, 100) is None
