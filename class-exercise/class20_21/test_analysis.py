@@ -51,3 +51,21 @@ def test_years_use_requested_window_on_sorted_yearly_means(client):
 @pytest.mark.parametrize("path", ["/analysis/genres?min_movies=0", "/analysis/years?window=0"])
 def test_analysis_rejects_nonpositive_parameters(client, path):
     assert client.get(path).status_code == 422
+
+
+@pytest.mark.parametrize("minimum,titles", [
+    (0, ["A", "B", "C", "D", "E"]),
+    (8, ["A", "C", "E"]),
+    (10, ["E"]),
+])
+def test_filter_movies_preserves_order(client, minimum, titles):
+    response = client.get("/movies/filter", params={"min_rating": minimum})
+    assert response.status_code == 200
+    assert [record["title"] for record in response.json()] == titles
+    assert all(record["rating"] >= minimum for record in response.json())
+    assert set(response.json()[0]) == {"title", "release_year", "rating", "genre"}
+
+
+@pytest.mark.parametrize("minimum", [-1, 11])
+def test_filter_movies_rejects_invalid_ratings(client, minimum):
+    assert client.get("/movies/filter", params={"min_rating": minimum}).status_code == 422
